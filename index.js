@@ -61,7 +61,7 @@ function getAllArtists(search, page, offset, res) {
         data.body.artists.items.map(artist => {
           return spotifyApi.getArtistAlbums(artist.id, { limit: 10, offset: 20 })
             .then(
-              (data) => getArtistAndAlbum(data.body.items, artist),
+              (data) => getArtistAndAlbums(data.body.items, artist),
               (err) => console.error(err))
         })
       ).then(artistDetails => {
@@ -81,7 +81,7 @@ function getAllArtists(search, page, offset, res) {
   });
 }
 
-function getArtistAndAlbum(albumArray, artist) {
+function getArtistAndAlbums(albumArray, artist) {
   const albumLink = albumArray.length ? ` | see <a href="/albums/${artist.id}">albums</a>` : '';
   const li = `<li><a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify${albumLink}</li>`;
   return li;
