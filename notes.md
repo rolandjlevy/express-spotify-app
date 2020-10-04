@@ -1,3 +1,8 @@
+### To do
+- add express router
+- implement ejs templates
+- styling
+
 ### Notes
 
 - https://www.npmjs.com/package/spotify-web-api-node
