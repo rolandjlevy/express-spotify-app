@@ -56,21 +56,39 @@ app.post('/artists', (req, res) => {
 
 function getAllArtists(search, page, offset, res) {
   spotifyApi.searchArtists(search, { limit: LIMIT, offset })
-  .then(data => {
-    const artistDetails = getArtistDetails(data.body.artists.items);
-    const paginationLinks = renderPaginationLinks(search, page, data.body.artists.total);
-    const paginationOptions = renderPaginationOptions(search, page, data.body.artists.total);
-    res.send(`
-    <h3>${data.body.artists.total} results for artists by "${search}"</h3>
-    <p><a href="/search">⬅ back to search</a></p>
-      ${paginationOptions}
-    <ul>
-      ${artistDetails}
-    </ul>
-  `);
-  }, function(err) {
-    console.error(err);
+    .then(data => {
+      Promise.all(
+        data.body.artists.items.map(artist => {
+          return spotifyApi.getArtistAlbums(artist.id, { limit: 10, offset: 20 })
+            .then(
+              (data) => getArtistAndAlbum(data.body.items, artist),
+              (err) => console.error(err))
+        })
+      ).then(artistDetails => {
+        const paginationOptions = renderPaginationOptions(search, page, data.body.artists.total);
+        res.send(`
+          <h3>${data.body.artists.total} results for artists by "${search}"</h3>
+          <p><a href="/search">⬅ back to search</a></p>
+          ${paginationOptions}
+          <ul>
+            ${artistDetails.join('')}
+          </ul>`
+        );
+      }, (err) => {
+        console.error(err);
+      }
+    );
   });
+}
+
+function getArtistAndAlbum(albumArray, artist) {
+  const albumLink = albumArray.length ? ` | see <a href="/albums/${artist.id}">albums</a>` : '';
+  const li = `<li><a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify${albumLink}</li>`;
+  return li;
+}
+
+function getImage(artist) {
+  artist.images.length ? `<li><img src="${artist.images[2].url}" width="${artist.images[2].width}"></li>` : '';
 }
 
 function renderPaginationOptions(search, page, total) {
@@ -88,62 +106,17 @@ function renderPaginationOptions(search, page, total) {
   return str;
 }
 
-function renderPaginationLinks(search, page, total) {
-  let str = '';
-  const totalPages = Math.ceil(total / Number(LIMIT));
-  if (totalPages == 1) return '';
-  str += `Go to page: `;
-  let counter = 0;
-  while (counter < totalPages) {
-    const col = page == counter ? 'red' : 'black';
-    str += `<a href="/artists?search=${search}&page=${counter}&offset=${counter * Number(LIMIT)}" style="color:${col}">${counter + 1}</a> | `;
-    counter++;
-  }
-  return str;
-}
-
-function getArtistDetails(artistArray) {
-    return artistArray.map(artist => {
-    const img = artist.images.length ? `<li><img src="${artist.images[2].url}" width="${artist.images[2].width}"></li>` : '';
-    // const albumsLink = await getAlbumsLink(artist.id)
-    return `<li><a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify | see <a href="/albums/${artist.id}">albums</a></li>
-      `;
-  }).join('');
-}
-
 app.get('/albums/:artistId', (req, res) => {
-  const artistId = req.params.artistId;
-  getAlbums(res, artistId);
-});
-
-function getAlbums(res, artistId) {
-  spotifyApi.getArtistAlbums(artistId, { limit: 10, offset: 20 })
-  .then(
-    (data) => {
-      res.json(data.body.items);
-    },
-    (err) => {
-      console.error(err);
-    }
-  );
-}
-
-function getAlbumsLink(artistId) {
-  spotifyApi.getArtistAlbums(artistId, { limit: 10, offset: 20 })
-  .then(
-    (data) => {
-      if (data.body.items.length) {
-        return ` | see <a href="/albums/${artistId}">albums</a>`;
-      } else {
-        return '';
+  spotifyApi.getArtistAlbums(req.params.artistId, { limit: 10, offset: 20 })
+    .then(
+      (data) => {
+        res.json(data.body.items);
+      },
+      (err) => {
+        console.error(err);
       }
-    },
-    (err) => {
-      console.error(err);
-    }
-  );
-}
-
+    );
+});
 
 app.get('/login', (req, res) => {
   const scopes = ['user-read-private', 'user-read-email', 'playlist-modify-public', 'playlist-modify-private'];
@@ -169,3 +142,47 @@ app.get('/callback', async (req, res) => {
 app.listen(PORT, () => {
   console.log('Listening on port', PORT)
 });
+
+///////////////////////////////////
+
+// old
+function getAlbumsLink(artistId) {
+  spotifyApi.getArtistAlbums(artistId, { limit: 10, offset: 20 })
+    .then(
+      (data) => {
+        if (data.body.items.length) {
+          return ` | see <a href="/albums/${artistId}">albums</a>`;
+        } else {
+          return '';
+        }
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
+}
+
+// old
+function getArtistDetails(artistArray) {
+  return artistArray.map(artist => {
+    const img = artist.images.length ? `<li><img src="${artist.images[2].url}" width="${artist.images[2].width}"></li>` : '';
+    // const albumsLink = await getAlbumsLink(artist.id)
+    return `<li><a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify | see <a href="/albums/${artist.id}">albums</a></li>
+      `;
+  }).join('');
+}
+
+// old
+function renderPaginationLinks(search, page, total) {
+  let str = '';
+  const totalPages = Math.ceil(total / Number(LIMIT));
+  if (totalPages == 1) return '';
+  str += `Go to page: `;
+  let counter = 0;
+  while (counter < totalPages) {
+    const col = page == counter ? 'red' : 'black';
+    str += `<a href="/artists?search=${search}&page=${counter}&offset=${counter * Number(LIMIT)}" style="color:${col}">${counter + 1}</a> | `;
+    counter++;
+  }
+  return str;
+}
