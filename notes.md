@@ -1,7 +1,12 @@
 ### To do
-- add express router
+- List out tracks of each album using the endpoint /albumtracks/:albumId'
+  Each track object comes with a preview_url, which is the source for a 30 second preview of a particular song. You can plug this into an HTML audio tag, and it will play the preview. Use the
+  spotifyApi.getAlbumTracks() method
 - implement ejs templates
 - styling
+
+### Done
+- add express router
 
 ### Notes
 

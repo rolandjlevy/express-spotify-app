@@ -60,6 +60,67 @@ router.get('/albums/:artistId', (req, res) => {
     );
 });
 
+router.get('/albumtracks/:albumId', (req, res) => {
+  // A track object comes with a preview_url, which is the source for a 30 second preview of a particular song. You can plug this into an HTML audio tag, and it will play the previe
+  spotifyApi.getAlbumTracks(req.params.albumId, { limit: 10, offset: 0 })
+    .then(
+      (data) => {
+        res.json(data.body.items);
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
+});
+
+function getAllArtists(search, page, offset, res) {
+  spotifyApi.searchArtists(search, { limit: LIMIT, offset })
+    .then(data => {
+      Promise.all(
+        data.body.artists.items.map(artist => {
+          return spotifyApi.getArtistAlbums(artist.id, { limit: 10, offset: 20 })
+            .then(
+              (data) => getArtistAndAlbums(data.body.items, artist),
+              (err) => console.error(err))
+        })
+      ).then(artistDetails => {
+        const totalResults = data.body.artists.total;
+        res.send(`
+          <h2>${totalResults} results for artists by "${search}"</h2>
+          <p><a href="/search">⬅ back to search</a></p>
+          ${pagination(search, page, totalResults)}
+          <ul>${artistDetails.join('')}</ul>`
+        );
+      }, (err) => {
+        console.error(err);
+      }
+    );
+  });
+}
+
+function getArtistAndAlbums(albumArray, artist) {
+  let str = `<details><summary style="cursor:pointer;outline:none;">View albums</summary><p>See data for <a href="/albums/${artist.id}">${albumArray.length}  albums</a></p><ul>`;
+  str += albumArray.map(album => `<li><a href="${album.external_urls.spotify}">${album.name}</a></li>`).join('');
+  str += '</ul></details>';
+  const li = `<li><a href="${artist.external_urls.spotify}" target="_blank"><h4 style="margin-bottom:0">${artist.name}</a> on Spotify</h4>${albumArray.length ? str : ''}</li>`;
+  return li;
+}
+
+function pagination(search, page, total) {
+  let str = '';
+  const totalPages = Math.ceil(total / Number(LIMIT));
+  if (totalPages == 1) return '';
+  str += `Go to page: <select onchange="location=this.options[this.selectedIndex].value">`;
+  let counter = 0;
+  while (counter < totalPages) {
+    const selected = page == counter ? ' selected' : '';
+    str += `<option value="/artists?search=${search}&page=${counter}&offset=${counter * Number(LIMIT)}"${selected}>${counter + 1}</option>`;
+    counter++;
+  }
+  str += `</select>`;
+  return str;
+}
+
 router.get('/login', (req, res) => {
   const scopes = ['user-read-private', 'user-read-email', 'playlist-modify-public', 'playlist-modify-private'];
   const url = spotifyApi.createAuthorizeURL(scopes) + "&show_dialog=true";
@@ -79,51 +140,5 @@ router.get('/callback', async (req, res) => {
     res.redirect('/#/error/invalid token');
   }
 });
-
-function getAllArtists(search, page, offset, res) {
-  spotifyApi.searchArtists(search, { limit: LIMIT, offset })
-    .then(data => {
-      Promise.all(
-        data.body.artists.items.map(artist => {
-          return spotifyApi.getArtistAlbums(artist.id, { limit: 10, offset: 20 })
-            .then(
-              (data) => getArtistAndAlbums(data.body.items, artist),
-              (err) => console.error(err))
-        })
-      ).then(artistDetails => {
-        const totalResults = data.body.artists.total;
-        res.send(`
-          <h3>${totalResults} results for artists by "${search}"</h3>
-          <p><a href="/search">⬅ back to search</a></p>
-          ${pagination(search, page, totalResults)}
-          <ul>${artistDetails.join('')}</ul>`
-        );
-      }, (err) => {
-        console.error(err);
-      }
-    );
-  });
-}
-
-function getArtistAndAlbums(albumArray, artist) {
-  const albumLink = albumArray.length ? ` | see <a href="/albums/${artist.id}">albums</a>` : '';
-  const li = `<li><a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify${albumLink}</li>`;
-  return li;
-}
-
-function pagination(search, page, total) {
-  let str = '';
-  const totalPages = Math.ceil(total / Number(LIMIT));
-  if (totalPages == 1) return '';
-  str += `Go to page: <select onchange="location=this.options[this.selectedIndex].value">`;
-  let counter = 0;
-  while (counter < totalPages) {
-    const selected = page == counter ? ' selected' : '';
-    str += `<option value="/artists?search=${search}&page=${counter}&offset=${counter * Number(LIMIT)}"${selected}>${counter + 1}</option>`;
-    counter++;
-  }
-  str += `</select>`;
-  return str;
-}
 
 module.exports = router;
