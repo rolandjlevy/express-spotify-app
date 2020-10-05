@@ -87,11 +87,11 @@ function getArtistAndAlbums(albumArray, artist) {
       <ul style="max-height:150px; overflow-y:auto; width:fit-content;">`;
   str += albumArray.map(album => `
         <li>
-          <a href="${album.external_urls.spotify}">${album.name}</a>
+          <a href="${album.external_urls.spotify}" target="_blank">${album.name}</a>
         </li>`).join('');
   str += `
       </ul>
-      <p>See <a href="/albums/${artist.id}">data for albums</a></p>
+      <p>See <a href="/albums/${artist.id}" target="_blank">data for albums</a></p>
     </details>
   `;
   const li = `<li><h4 style="margin-bottom:10px">See <a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify</h4>${albumArray.length ? str : ''}</li>`;
