@@ -27,20 +27,14 @@ spotifyApi.clientCredentialsGrant()
 router.get('/', (req, res) => {
   res.send(`
     <h3><a href="/login">Login to Spotify</a></h3>
-    <form method="POST" action="/artists">
-      <input type="text" name="search" value="${exampleTerm}" placeholder="Enter..." />
-      <button type="submit">Submit</button>
-    </form>
+    ${getSearchForm()}
   `);
 });
 
 router.get('/search', (req, res) => {
   res.send(`
     <h3>Search artists by</h3>
-    <form method="POST" action="/artists">
-      <input type="text" name="search" value="${exampleTerm}" placeholder="Enter..." />
-      <button type="submit">Submit</button>
-    </form>
+    ${getSearchForm()}
   `);
 });
 
@@ -52,6 +46,14 @@ router.get('/artists', (req, res) => {
 router.post('/artists', (req, res) => {
   getAllArtists(req.body.search, 0, 0, res);
 });
+
+function getSearchForm() {
+  return `
+    <form method="POST" action="/artists">
+      <input type="text" name="search" value="${exampleTerm}" placeholder="Enter..." />
+      <button type="submit">Submit</button>
+    </form>`;
+}
 
 function getAllArtists(search, page, offset, res) {
   spotifyApi.searchArtists(search, { limit: LIMIT, offset })
@@ -81,7 +83,7 @@ function getAllArtists(search, page, offset, res) {
 function getArtistAndAlbums(albumArray, artist) {
   let str = `
     <details>
-      <summary style="margin-bottom:10px; cursor:pointer; outline:none;">View albums</summary>
+      <summary style="margin-bottom:10px; cursor:pointer; outline:none;">View ${albumArray.length} albums</summary>
       <ul style="max-height:150px; overflow-y:auto; width:fit-content;">`;
   str += albumArray.map(album => `
         <li>
@@ -89,7 +91,7 @@ function getArtistAndAlbums(albumArray, artist) {
         </li>`).join('');
   str += `
       </ul>
-      <p>See data for <a href="/albums/${artist.id}">${albumArray.length} albums</a></p>
+      <p>See <a href="/albums/${artist.id}">data for albums</a></p>
     </details>
   `;
   const li = `<li><h4 style="margin-bottom:10px">See <a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify</h4>${albumArray.length ? str : ''}</li>`;
@@ -141,7 +143,7 @@ router.get('/callback', async (req, res) => {
     const { access_token, refresh_token } = data.body;
     spotifyApi.setAccessToken(access_token);
     spotifyApi.setRefreshToken(refresh_token);
-    console.log('The credentials are ' + JSON.stringify(spotifyApi.getCredentials()));
+    // console.log('The credentials are ' + JSON.stringify(spotifyApi.getCredentials()));
     res.redirect('/search');
   } catch (err) {
     res.redirect('/#/error/invalid token');
