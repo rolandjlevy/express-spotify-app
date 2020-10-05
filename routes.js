@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router();
 require('dotenv').config();
+const exampleTerm = 'Jimmy Hendrix';
 
 const { SPOTIFY_API_ID, SPOTIFY_CLIENT_SECRET, LIMIT } = process.env;
 
@@ -16,16 +17,20 @@ const spotifyApi = new SpotifyWebApi({
 });
 
 spotifyApi.clientCredentialsGrant()
-  .then((data) => {
+  .then(
+    (data) => {
     spotifyApi.setAccessToken(data.body['access_token']);
-  }, function(err) {
+  }, (err) => {
     console.log('Error retrieving an access token', err);
   });
 
 router.get('/', (req, res) => {
   res.send(`
     <h3><a href="/login">Login to Spotify</a></h3>
-    <a href="/search">Go to search</a>
+    <form method="POST" action="/artists">
+      <input type="text" name="search" value="${exampleTerm}" placeholder="Enter..." />
+      <button type="submit">Submit</button>
+    </form>
   `);
 });
 
@@ -33,7 +38,7 @@ router.get('/search', (req, res) => {
   res.send(`
     <h3>Search artists by</h3>
     <form method="POST" action="/artists">
-      <input type="text" name="search" placeholder="Enter any word..." />
+      <input type="text" name="search" value="${exampleTerm}" placeholder="Enter..." />
       <button type="submit">Submit</button>
     </form>
   `);
@@ -48,37 +53,12 @@ router.post('/artists', (req, res) => {
   getAllArtists(req.body.search, 0, 0, res);
 });
 
-router.get('/albums/:artistId', (req, res) => {
-  spotifyApi.getArtistAlbums(req.params.artistId, { limit: 10, offset: 0 })
-    .then(
-      (data) => {
-        res.json(data.body.items);
-      },
-      (err) => {
-        console.error(err);
-      }
-    );
-});
-
-router.get('/albumtracks/:albumId', (req, res) => {
-  // A track object comes with a preview_url, which is the source for a 30 second preview of a particular song. You can plug this into an HTML audio tag, and it will play the previe
-  spotifyApi.getAlbumTracks(req.params.albumId, { limit: 10, offset: 0 })
-    .then(
-      (data) => {
-        res.json(data.body.items);
-      },
-      (err) => {
-        console.error(err);
-      }
-    );
-});
-
 function getAllArtists(search, page, offset, res) {
   spotifyApi.searchArtists(search, { limit: LIMIT, offset })
     .then(data => {
       Promise.all(
         data.body.artists.items.map(artist => {
-          return spotifyApi.getArtistAlbums(artist.id, { limit: 10, offset: 20 })
+          return spotifyApi.getArtistAlbums(artist.id)
             .then(
               (data) => getArtistAndAlbums(data.body.items, artist),
               (err) => console.error(err))
@@ -99,12 +79,39 @@ function getAllArtists(search, page, offset, res) {
 }
 
 function getArtistAndAlbums(albumArray, artist) {
-  let str = `<details><summary style="cursor:pointer;outline:none;">View albums</summary><p>See data for <a href="/albums/${artist.id}">${albumArray.length}  albums</a></p><ul>`;
-  str += albumArray.map(album => `<li><a href="${album.external_urls.spotify}">${album.name}</a></li>`).join('');
-  str += '</ul></details>';
-  const li = `<li><a href="${artist.external_urls.spotify}" target="_blank"><h4 style="margin-bottom:0">${artist.name}</a> on Spotify</h4>${albumArray.length ? str : ''}</li>`;
+  let str = `
+    <details>
+      <summary style="margin-bottom:10px; cursor:pointer; outline:none;">View albums</summary>
+      <ul style="max-height:150px; overflow-y:auto; width:fit-content;">`;
+  str += albumArray.map(album => `
+        <li>
+          <a href="${album.external_urls.spotify}">${album.name}</a>
+        </li>`).join('');
+  str += `
+      </ul>
+      <p>See data for <a href="/albums/${artist.id}">${albumArray.length} albums</a></p>
+    </details>
+  `;
+  const li = `<li><h4 style="margin-bottom:10px">See <a href="${artist.external_urls.spotify}" target="_blank">${artist.name}</a> on Spotify</h4>${albumArray.length ? str : ''}</li>`;
   return li;
 }
+
+router.get('/albums/:artistId', (req, res) => {
+  spotifyApi.getArtistAlbums(req.params.artistId, { limit: LIMIT, offset: 0 })
+    .then(
+      (data) => res.json(data.body.items),
+      (err) => console.error(err)
+    );
+});
+
+router.get('/albumtracks/:albumId', (req, res) => {
+  // A track object comes with a preview_url, which is the source for a 30 second preview of a particular song. You can plug this into an HTML audio tag, and it will play the previe
+  spotifyApi.getAlbumTracks(req.params.albumId, { limit: LIMIT, offset: 0 })
+    .then(
+      (data) => res.json(data.body.items),
+      (err) => console.error(err)
+    );
+});
 
 function pagination(search, page, total) {
   let str = '';
