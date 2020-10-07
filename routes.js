@@ -68,8 +68,8 @@ function getAllArtists(search, page, offset, res) {
       ).then(artistDetails => {
         const totalResults = data.body.artists.total;
         res.send(`
-          <h2>${totalResults} results for artists by "${search}"</h2>
-          <p><a href="/search">⬅ back to search</a></p>
+          <h2>${String(totalResults).toLocaleString()} results for artists by "${search}"</h2>
+          <p><a href="/search">⬅ Back to search</a></p>
           ${pagination(search, page, totalResults)}
           <ul>${artistDetails.join('')}</ul>`
         );
