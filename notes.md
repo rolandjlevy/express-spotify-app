@@ -3,7 +3,7 @@
   Each track object comes with a preview_url, which is the source for a 30 second preview of a particular song. You can plug this into an HTML audio tag, and it will play the preview. Use the
   spotifyApi.getAlbumTracks() method
 - implement ejs templates
-- styling
+- styling improved
 
 ### Done
 - add express router
