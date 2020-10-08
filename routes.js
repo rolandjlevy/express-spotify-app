@@ -140,12 +140,13 @@ router.get('/login', (req, res) => {
 
 router.get('/callback', async (req, res) => {
   const { code } = req.query;
+  const credentials = JSON.stringify(spotifyApi.getCredentials());
   try {
     const data = await spotifyApi.authorizationCodeGrant(code)
     const { access_token, refresh_token } = data.body;
     spotifyApi.setAccessToken(access_token);
     spotifyApi.setRefreshToken(refresh_token);
-    // console.log('The credentials are ' + JSON.stringify(spotifyApi.getCredentials()));
+    // console.log(`credentials are: ${credentials}`);
     res.redirect('/search');
   } catch (err) {
     res.redirect('/#/error/invalid token');
