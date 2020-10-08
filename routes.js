@@ -68,7 +68,7 @@ function getAllArtists(search, page, offset, res) {
       ).then(artistDetails => {
         const totalResults = data.body.artists.total;
         res.send(`
-          <h2>${Number(totalResults).toLocaleString()} results for artists by "${search}"</h2>
+          <h2>${Number(totalResults).toLocaleString()} results from searching for the artist "${search}"</h2>
           <p><a href="/search">⬅ Back to search</a></p>
           ${pagination(search, page, totalResults)}
           <ul>${artistDetails.join('')}</ul>`
@@ -85,10 +85,12 @@ function getArtistAndAlbums(albumArray, artist) {
     <details>
       <summary style="margin-bottom:10px; cursor:pointer; outline:none;">View ${albumArray.length} albums</summary>
       <ul style="max-height:150px; overflow-y:auto; width:fit-content;">`;
-  str += albumArray.map(album => `
-        <li>
-          <a href="${album.external_urls.spotify}" target="_blank">${album.name}</a>
-        </li>`).join('');
+  str += albumArray.map(album => {
+        const img = `<img src="${album.images[2].url}" style="width:32px" />`;
+        return `
+        <li style="margin:5px 0;">
+          <a href="${album.external_urls.spotify}" target="_blank">${img} ${album.name}</a>
+        </li>`}).join('');
   str += `
       </ul>
       <p>See <a href="/albums/${artist.id}" target="_blank">data for albums</a></p>
