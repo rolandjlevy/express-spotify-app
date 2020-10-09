@@ -27,7 +27,8 @@ spotifyApi.clientCredentialsGrant()
 
 router.get('/', (req, res) => {
   res.send(`
-    <h3><a href="/login">Login to Spotify</a></h3>
+    <h2>Spotify search</h2>
+    <h3><a href="/login">Login</a> 🔑</h3>
     ${getSearchForm()}
   `);
 });
@@ -85,7 +86,7 @@ function getArtistAndAlbums(albumArray, artist) {
   let str = `
     <details>
       <summary style="margin-bottom:10px; cursor:pointer; outline:none;">View ${albumArray.length} albums</summary>
-      <ul style="max-height:150px; overflow-y:auto; width:fit-content;">`;
+      <ul style="max-height:150px; overflow-y:auto; max-width:250px;">`;
   str += albumArray.map(album => {
         const img = `<img src="${album.images[2].url}" style="width:32px" />`;
         return `
