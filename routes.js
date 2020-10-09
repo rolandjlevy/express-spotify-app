@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router();
 require('dotenv').config();
 const exampleTerm = 'Jobim';
+const redirectUri = 'https://express-spotify-app.rjlevy.repl.co/callback';
 
 const { SPOTIFY_API_ID, SPOTIFY_CLIENT_SECRET, LIMIT } = process.env;
 
@@ -13,7 +14,7 @@ const SpotifyWebApi = require('spotify-web-api-node');
 const spotifyApi = new SpotifyWebApi({
   clientId: SPOTIFY_API_ID,
   clientSecret: SPOTIFY_CLIENT_SECRET,
-  redirectUri: 'https://express-spotify-app.rjlevy.repl.co/callback'
+  redirectUri
 });
 
 spotifyApi.clientCredentialsGrant()
