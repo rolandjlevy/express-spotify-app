@@ -27,18 +27,14 @@ spotifyApi.clientCredentialsGrant()
 
 router.get('/', (req, res) => {
   res.send(`
-    <h2>Spotify search</h2>
+    <h2>Spotify Search 🔎</h2>
     <h3><a href="/login">Login</a> 🔑</h3>
+    <h3>Search artists 🎵</h3>
     ${getSearchForm()}
   `);
 });
 
-router.get('/search', (req, res) => {
-  res.send(`
-    <h3>Search artists by</h3>
-    ${getSearchForm()}
-  `);
-});
+router.get('/search', (req, res) => res.redirect('/'));
 
 router.get('/artists', (req, res) => {
   const { search, page, offset } = req.query;
