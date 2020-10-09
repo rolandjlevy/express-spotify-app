@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router();
 require('dotenv').config();
-const exampleTerm = 'Wes Montgomery';
+const exampleTerm = 'Jobim';
 
 const { SPOTIFY_API_ID, SPOTIFY_CLIENT_SECRET, LIMIT } = process.env;
 
