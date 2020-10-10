@@ -30,8 +30,14 @@ router.get('/', (req, res) => {
     <h2>Spotify Search 🔎</h2>
     <h3><a href="/login">Login</a> 🔑</h3>
     <h3>Search artists 🎵</h3>
+    <!--<a href="/test">Test</a>-->
     ${getSearchForm()}
   `);
+});
+
+router.get('/test', (req, res) => {
+  const data = 'This is the data';
+  res.render('index.html', {data} );
 });
 
 router.get('/search', (req, res) => res.redirect('/'));

@@ -1,8 +1,11 @@
 const express = require('express');
-const ejs = require('ejs');
 const path = require('path');
 const routes = require('./routes');
 const app = express();
+
+app.engine('.html', require('ejs').renderFile);
+app.set('view engine', 'html');
+app.set('views', __dirname + '/views');
 
 require('dotenv').config();
 const { PORT } = process.env;
