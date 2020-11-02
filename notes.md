@@ -15,3 +15,9 @@
 - https://github.com/Jossdz/lab-spotify-express
 - https://developer.spotify.com/documentation/web-api/reference-beta/#reference-index
 - https://dev.to/jamesliudotcc/how-to-use-async-await-with-map-and-promise-all-1gb5
+
+- https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-an-albums-tracks
+
+- https://developer.spotify.com/documentation/general/guides/authorization-guide/
+
+- https://developer.spotify.com/documentation/web-api/quick-start/
